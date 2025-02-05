@@ -1,0 +1,378 @@
+{
+  "name": "Gmail Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -860,
+        -60
+      ],
+      "id": "ad50b2c2-b3ec-4fc6-98dc-be60b4929b45",
+      "name": "Gmail Trigger",
+      "notesInFlow": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mPeIsrztGYPBi0Km",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Billing ",
+              "description": "Classify emails that is related to payment inquires, invoices, charges, or financial transactions."
+            },
+            {
+              "category": "support",
+              "description": "Classify emails from current clients requesting help with technical issues, product usage, or service-related assistance."
+            },
+            {
+              "category": "College ",
+              "description": "Classify emails that is related to the college or schools . "
+            },
+            {
+              "category": "Consultation",
+              "description": "classify emails that inquired about service, availability or scheduling a consultation.  "
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        -60
+      ],
+      "id": "ec075a1b-0b5b-46e8-84d6-40b464ba41b6",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        180
+      ],
+      "id": "6f710526-b064-4436-8152-38ac0eb397b5",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "XiXpDAzfoWugWDEq",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_7501491827404889580"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        180,
+        540
+      ],
+      "id": "faf16137-f95f-492c-9090-b004f6eb7152",
+      "name": "Consultation",
+      "webhookId": "c140158c-a567-4d46-a5c5-6153e30dbb81",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mPeIsrztGYPBi0Km",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_5725648637223107825"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        200
+      ],
+      "id": "557c7062-8a2d-4f0b-80e1-75604259a1e8",
+      "name": "College",
+      "webhookId": "c140158c-a567-4d46-a5c5-6153e30dbb81",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mPeIsrztGYPBi0Km",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_3280431902770138711"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        140,
+        -320
+      ],
+      "id": "09cbbd7f-9373-4973-89b8-b9014aeee171",
+      "name": "Support",
+      "webhookId": "c140158c-a567-4d46-a5c5-6153e30dbb81",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mPeIsrztGYPBi0Km",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_2178607756074633071"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        140,
+        -640
+      ],
+      "id": "9a584e37-c5fc-4706-a4d5-f1cbf604af70",
+      "name": "Billing",
+      "webhookId": "c140158c-a567-4d46-a5c5-6153e30dbb81",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mPeIsrztGYPBi0Km",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let emailBody = \"\";\n\n// Check if payload.body.data exists\nif ($json.payload && $json.payload.body && $json.payload.body.data) {\n    const base64Data = $json.payload.body.data;\n    emailBody = Buffer.from(base64Data, \"base64\").toString(\"utf-8\");\n} else if ($json.snippet) {\n    // Fallback: Use snippet if full body isn't available\n    emailBody = $json.snippet;\n} else {\n    return { error: \"Email body not found\" };\n}\n\n// Debug: Print extracted email body\nconsole.log(\"Extracted Email Body:\", emailBody);\n\n// Extract Invoice Number (Example: \"Invoice #123456\")\nconst invoiceMatch = emailBody.match(/Invoice\\s*(Number)?:?\\s*(INV-?\\d+)/i);\nconst invoiceNumber = invoiceMatch ? invoiceMatch[2] : \"Not found\";\n\n// Extract Amount (Example: \"$1234.56\")\nconst amountMatch = emailBody.match(/\\$([\\d,]+\\.\\d{2})/);\nconst amount = amountMatch ? amountMatch[1] : \"Not found\";\n\n// Extract Due Date (Example: \"Due Date: 2025-02-15\")\nconst dateMatch = emailBody.match(/Due Date[:\\s]*(\\d{4}-\\d{2}-\\d{2})/i);\nconst dueDate = dateMatch ? dateMatch[1] : \"Not found\";\n\n// Extract Vendor Name (Example: \"Thank you for shopping with Amazon!\")\nconst vendorMatch = emailBody.match(/Thank you for shopping with (.+?)!/i);\nconst vendorName = vendorMatch ? vendorMatch[1] : \"Unknown Vendor\";\n\n// Return extracted details\nreturn {\n    email_body: emailBody,\n    invoice_number: invoiceNumber,\n    amount: amount,\n    due_date: dueDate,\n    vendor_name: vendorName\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        -640
+      ],
+      "id": "5d051e9b-5bc2-4e36-bdbe-1d5b2cb2e2fb",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZzYpOllcoOZHmp69G30iDYpUiVUI8F5IyD5RK54bUic",
+          "mode": "list",
+          "cachedResultName": "INVOICE DETAILS ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZzYpOllcoOZHmp69G30iDYpUiVUI8F5IyD5RK54bUic/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZzYpOllcoOZHmp69G30iDYpUiVUI8F5IyD5RK54bUic/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice Number": "={{ $json.invoice_number }}",
+            "Amount": "={{ $json.amount }}",
+            "Due Date": "={{ $json.due_date }}",
+            "Vendor Name": "={{ $json.vendor_name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Invoice Number",
+              "displayName": "Invoice Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Due Date",
+              "displayName": "Due Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vendor Name",
+              "displayName": "Vendor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        640,
+        -640
+      ],
+      "id": "b38b5ebb-5f8f-435c-a3e2-5ce3ae4b8177",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ZHhTdleTPpo5Fsuo",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Billing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Support",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "College",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Consultation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Billing": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultation": {
+      "main": [
+        []
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b6f2b562-bc2b-4369-a329-5d5ae7af2545",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6ac82ebbaed634b3df18c8f8a94049235fa88ee098c765880258aabf57ae476e"
+  },
+  "id": "jBLpDr55FGVXc6JN",
+  "tags": []
+}
